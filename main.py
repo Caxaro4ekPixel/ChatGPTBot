@@ -3,7 +3,7 @@ from decouple import config
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from utils import num_tokens_from_messages, logger, is_reg, counter_mess
-from aiogram.utils import executor
+from aiogram.utils import executor, markdown
 import json
 
 openai.api_key = config("OPENAI_API_KEY")
@@ -65,9 +65,9 @@ async def callback_inline(call: types.CallbackQuery):
         await bot.edit_message_text(chat_id=734264203, message_id=call.message.message_id,
                                     text="Пользователь @%s НЕ зарегистрирован!" % data[2])
     if data[0] == "rehistory":
+        await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=call.message.text)
+        await bot.send_message(chat_id=call.message.chat.id, text="История сброшена")
         if bool(list(filter(lambda x: int(data[1]) in x, temp_history))):
-            await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=call.message.text)
-            await bot.send_message(chat_id=call.message.chat.id, text="История сброшена")
             temp_history[int(data[1])] = [{"role": "system", "content": "You are a helpful assistant."}]
 
 
@@ -92,9 +92,9 @@ async def dialog(message: types.Message, *args, **kwargs):
         if message['error'] == "not registered":
             await bot.send_message(message['user'].chat.id, "Вы не зарегистрированы! пропишите /reg")
     else:
-        index_history = [(index, history) for index, history in enumerate(temp_history) if message.chat.id in history][
-            0]
+        index_history = [(index, history) for index, history in enumerate(temp_history) if message.chat.id in history]
         if bool(index_history):
+            index_history=index_history[0]
             keyboard = types.InlineKeyboardMarkup()
             keyboard.add(
                 types.InlineKeyboardButton(text="Сбросить историю",
@@ -112,8 +112,11 @@ async def dialog(message: types.Message, *args, **kwargs):
                 messages=temp_history[index_history[0]][message.chat.id]
             )
             counter_mess(message.chat.id)
+            answer = str(response['choices'][0]['message']['content'])
+            for c in ['-', '\\', '-', '.']:
+                answer = answer.replace(c, "\\" + c)
             temp_history[index_history[0]][message.chat.id].append({"role": "assistant", "content": response['choices'][0]['message']['content']})
-            await bot.send_message(message.chat.id, str(response['choices'][0]['message']['content']).replace("-", "\\-").replace("\\", "\\\\").replace('.', '\\.'), reply_markup=keyboard, parse_mode="MarkdownV2")
+            await bot.send_message(message.chat.id, answer, reply_markup=keyboard, parse_mode="MarkdownV2")
         else:
             await bot.send_message(message.chat.id, "Пропишите команду /gpt")
 
