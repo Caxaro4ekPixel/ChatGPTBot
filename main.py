@@ -67,8 +67,9 @@ async def callback_inline(call: types.CallbackQuery):
     if data[0] == "rehistory":
         await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=call.message.text)
         await bot.send_message(chat_id=call.message.chat.id, text="История сброшена")
-        if bool(list(filter(lambda x: int(data[1]) in x, temp_history))):
-            temp_history[int(data[1])] = [{"role": "system", "content": "You are a helpful assistant."}]
+        index_history = [(index, history) for index, history in enumerate(temp_history) if int(data[1]) in history]
+        if bool(index_history):
+            temp_history[index_history[0][0]][data[1]] = [{"role": "system", "content": "You are a helpful assistant."}]
 
 
 @dp.message_handler(commands='gpt')
@@ -112,9 +113,9 @@ async def dialog(message: types.Message, *args, **kwargs):
                 messages=temp_history[index_history[0]][message.chat.id]
             )
             counter_mess(message.chat.id)
-            answer = str(response['choices'][0]['message']['content'])
-            for c in ['-', '\\', '-', '.']:
-                answer = answer.replace(c, "\\" + c)
+            answer = markdown.escape_md(str(response['choices'][0]['message']['content']))
+            # for c in ['-', '\\', '-', '.', '?', '(', ')', '[', ']', '{', '}', '!', '~', '@', '#']:
+            #     answer = answer.replace(c, "\\" + c)
             temp_history[index_history[0]][message.chat.id].append({"role": "assistant", "content": response['choices'][0]['message']['content']})
             await bot.send_message(message.chat.id, answer, reply_markup=keyboard, parse_mode="MarkdownV2")
         else:
