@@ -89,37 +89,40 @@ async def cmd_gpt(message: types.Message, *args, **kwargs):
 @logger
 @is_reg
 async def dialog(message: types.Message, *args, **kwargs):
-    if "error" in message:
-        if message['error'] == "not registered":
-            await bot.send_message(message['user'].chat.id, "Вы не зарегистрированы! пропишите /reg")
-    else:
-        index_history = [(index, history) for index, history in enumerate(temp_history) if message.chat.id in history]
-        if bool(index_history):
-            index_history=index_history[0]
-            keyboard = types.InlineKeyboardMarkup()
-            keyboard.add(
-                types.InlineKeyboardButton(text="Сбросить историю",
-                                           callback_data="rehistory-%s-%s" % (message.chat.id, message.chat.username)),
-            )
-            temp_history[index_history[0]][message.chat.id].append({"role": "user", "content": message.text})
-            conv_history_tokens = num_tokens_from_messages(temp_history[index_history[0]][message.chat.id])
-            while conv_history_tokens + max_response_tokens >= token_limit:
-                del temp_history[index_history[0]][message.chat.id][1]
-                conv_history_tokens = num_tokens_from_messages(temp_history[index_history[0]][message.chat.id])
-            print(conv_history_tokens)
-            await bot.send_message(message.chat.id, "Ждём ответа...")
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=temp_history[index_history[0]][message.chat.id]
-            )
-            counter_mess(message.chat.id)
-            answer = markdown.escape_md(str(response['choices'][0]['message']['content']))
-            # for c in ['-', '\\', '-', '.', '?', '(', ')', '[', ']', '{', '}', '!', '~', '@', '#']:
-            #     answer = answer.replace(c, "\\" + c)
-            temp_history[index_history[0]][message.chat.id].append({"role": "assistant", "content": response['choices'][0]['message']['content']})
-            await bot.send_message(message.chat.id, answer, reply_markup=keyboard, parse_mode="MarkdownV2")
+    try:
+        if "error" in message:
+            if message['error'] == "not registered":
+                await bot.send_message(message['user'].chat.id, "Вы не зарегистрированы! пропишите /reg")
         else:
-            await bot.send_message(message.chat.id, "Пропишите команду /gpt")
+            index_history = [(index, history) for index, history in enumerate(temp_history) if message.chat.id in history]
+            if bool(index_history):
+                index_history=index_history[0]
+                keyboard = types.InlineKeyboardMarkup()
+                keyboard.add(
+                    types.InlineKeyboardButton(text="Сбросить историю",
+                                               callback_data="rehistory-%s-%s" % (message.chat.id, message.chat.username)),
+                )
+                temp_history[index_history[0]][message.chat.id].append({"role": "user", "content": message.text})
+                conv_history_tokens = num_tokens_from_messages(temp_history[index_history[0]][message.chat.id])
+                while conv_history_tokens + max_response_tokens >= token_limit:
+                    del temp_history[index_history[0]][message.chat.id][1]
+                    conv_history_tokens = num_tokens_from_messages(temp_history[index_history[0]][message.chat.id])
+                print(conv_history_tokens)
+                await bot.send_message(message.chat.id, "Ждём ответа...")
+                response = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=temp_history[index_history[0]][message.chat.id]
+                )
+                counter_mess(message.chat.id)
+                answer = markdown.escape_md(str(response['choices'][0]['message']['content']))
+                # for c in ['-', '\\', '-', '.', '?', '(', ')', '[', ']', '{', '}', '!', '~', '@', '#']:
+                #     answer = answer.replace(c, "\\" + c)
+                temp_history[index_history[0]][message.chat.id].append({"role": "assistant", "content": response['choices'][0]['message']['content']})
+                await bot.send_message(message.chat.id, answer, reply_markup=keyboard, parse_mode="MarkdownV2")
+            else:
+                await bot.send_message(message.chat.id, "Пропишите команду /gpt")
+    except openai.error.RateLimitError:
+        await bot.send_message(message.chat.id, "У вас превышено количество запросов. Попробуйте позже!")
 
 
 if __name__ == '__main__':
