@@ -107,7 +107,6 @@ async def dialog(message: types.Message, *args, **kwargs):
                 while conv_history_tokens + max_response_tokens >= token_limit:
                     del temp_history[index_history[0]][message.chat.id][1]
                     conv_history_tokens = num_tokens_from_messages(temp_history[index_history[0]][message.chat.id])
-                print(conv_history_tokens)
                 await bot.send_message(message.chat.id, "Ждём ответа...")
                 response = openai.ChatCompletion.create(
                     model="gpt-3.5-turbo",
@@ -115,8 +114,6 @@ async def dialog(message: types.Message, *args, **kwargs):
                 )
                 counter_mess(message.chat.id)
                 answer = markdown.escape_md(str(response['choices'][0]['message']['content']))
-                # for c in ['-', '\\', '-', '.', '?', '(', ')', '[', ']', '{', '}', '!', '~', '@', '#']:
-                #     answer = answer.replace(c, "\\" + c)
                 temp_history[index_history[0]][message.chat.id].append({"role": "assistant", "content": response['choices'][0]['message']['content']})
                 await bot.send_message(message.chat.id, answer, reply_markup=keyboard, parse_mode="MarkdownV2")
             else:
