@@ -3,3 +3,4 @@
 logg_file.log
 __pycache__
 .env
+users.json
