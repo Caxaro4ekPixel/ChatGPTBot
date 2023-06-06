@@ -115,7 +115,7 @@ async def dialog(message: types.Message, *args, **kwargs):
                 )
                 counter_mess(message.chat.id)
                 answer = markdown.escape_md(str(response['choices'][0]['message']['content']))
-                answer = textwrap.wrap(answer, 1000)
+                answer = textwrap.wrap(answer, 4096)
                 temp_history[index_history[0]][message.chat.id].append({"role": "assistant", "content": response['choices'][0]['message']['content']})
                 for mess in answer:
                     await bot.send_message(message.chat.id, mess, reply_markup=keyboard, parse_mode="MarkdownV2")
