@@ -5,6 +5,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from utils import num_tokens_from_messages, logger, is_reg, counter_mess
 from aiogram.utils import executor, markdown
 import json
+import textwrap
 
 openai.api_key = config("OPENAI_API_KEY")
 
@@ -114,8 +115,10 @@ async def dialog(message: types.Message, *args, **kwargs):
                 )
                 counter_mess(message.chat.id)
                 answer = markdown.escape_md(str(response['choices'][0]['message']['content']))
+                answer = textwrap.wrap(answer, 1000)
                 temp_history[index_history[0]][message.chat.id].append({"role": "assistant", "content": response['choices'][0]['message']['content']})
-                await bot.send_message(message.chat.id, answer, reply_markup=keyboard, parse_mode="MarkdownV2")
+                for mess in answer:
+                    await bot.send_message(message.chat.id, mess, reply_markup=keyboard, parse_mode="MarkdownV2")
             else:
                 await bot.send_message(message.chat.id, "Пропишите команду /gpt")
     except openai.error.RateLimitError:
