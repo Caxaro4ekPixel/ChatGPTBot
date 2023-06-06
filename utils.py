@@ -2,9 +2,31 @@ import tiktoken
 import logging
 import functools
 import json
+import math
 
 logging.basicConfig(filename='logg_file.log', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO, encoding="UTF-8")
+
+
+def split_messages(messages):
+    answer_s = []
+    this_pos = 0
+    next_pos = 4096
+    for i in range(0, (math.ceil(len(messages) / 4096) - 1)):
+        counter = 0
+        for j in messages[::-1]:
+            counter += 1
+            if j == " " or j == "\n":
+                next_pos -= counter - 1
+                break
+        answer_s.append(messages[this_pos:next_pos])
+        this_pos = next_pos
+        next_pos += 4096
+
+    answer_s.append(messages[this_pos:])
+    return answer_s
+
+
 
 
 def num_tokens_from_messages(messages, model="gpt-3.5-turbo-0301"):
