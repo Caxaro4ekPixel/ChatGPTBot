@@ -12,7 +12,7 @@ def split_messages(messages):
     answer_s = []
     this_pos = 0
     next_pos = 4096
-    for i in range(0, (math.ceil(len(messages) / 4096) - 1)):
+    for i in range(0, (math.ceil(len(messages) / 4096))):
         counter = 0
         for j in messages[::-1]:
             counter += 1
