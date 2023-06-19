@@ -117,7 +117,7 @@ async def dialog(message: types.Message, *args, **kwargs):
                 answer = split_messages(answer)
                 temp_history[index_history[0]][message.chat.id].append({"role": "assistant", "content": response['choices'][0]['message']['content']})
                 for i, mess in enumerate(answer):
-                    if i != len(answer) - 1:
+                    if i != len(answer):
                         await bot.send_message(message.chat.id, mess, parse_mode="MarkdownV2")
                     else:
                         await bot.send_message(message.chat.id, mess, reply_markup=keyboard, parse_mode="MarkdownV2")
