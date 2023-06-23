@@ -65,7 +65,8 @@ async def callback_inline(call: types.CallbackQuery):
         await bot.edit_message_text(chat_id=734264203, message_id=call.message.message_id,
                                     text="Пользователь @%s НЕ зарегистрирован!" % data[2])
     if data[0] == "rehistory":
-        await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=call.message.text)
+        await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                                    text=call.message.text)
         await bot.send_message(chat_id=call.message.chat.id, text="История сброшена")
         index_history = [(index, history) for index, history in enumerate(temp_history) if int(data[1]) in history]
         if bool(index_history):
@@ -94,13 +95,15 @@ async def dialog(message: types.Message, *args, **kwargs):
             if message['error'] == "not registered":
                 await bot.send_message(message['user'].chat.id, "Вы не зарегистрированы! пропишите /reg")
         else:
-            index_history = [(index, history) for index, history in enumerate(temp_history) if message.chat.id in history]
+            index_history = [(index, history) for index, history in enumerate(temp_history) if
+                             message.chat.id in history]
             if bool(index_history):
-                index_history=index_history[0]
+                index_history = index_history[0]
                 keyboard = types.InlineKeyboardMarkup()
                 keyboard.add(
                     types.InlineKeyboardButton(text="Сбросить историю",
-                                               callback_data="rehistory-%s-%s" % (message.chat.id, message.chat.username)),
+                                               callback_data="rehistory-%s-%s" % (
+                                               message.chat.id, message.chat.username)),
                 )
                 temp_history[index_history[0]][message.chat.id].append({"role": "user", "content": message.text})
                 conv_history_tokens = num_tokens_from_messages(temp_history[index_history[0]][message.chat.id])
@@ -114,13 +117,12 @@ async def dialog(message: types.Message, *args, **kwargs):
                 )
                 counter_mess(message.chat.id)
                 answer = markdown.escape_md(str(response['choices'][0]['message']['content']))
+                print(str(response['choices'][0]['message']['content']))
                 answer = split_messages(answer)
-                temp_history[index_history[0]][message.chat.id].append({"role": "assistant", "content": response['choices'][0]['message']['content']})
-                for i, mess in enumerate(answer):
-                    if i != len(answer):
-                        await bot.send_message(message.chat.id, mess, parse_mode="MarkdownV2")
-                    else:
-                        await bot.send_message(message.chat.id, mess, reply_markup=keyboard, parse_mode="MarkdownV2")
+                temp_history[index_history[0]][message.chat.id].append(
+                    {"role": "assistant", "content": response['choices'][0]['message']['content']})
+                for mess in answer:
+                    await bot.send_message(message.chat.id, mess, reply_markup=keyboard, parse_mode="MarkdownV2")
             else:
                 await bot.send_message(message.chat.id, "Пропишите команду /gpt")
     except openai.error.RateLimitError:
