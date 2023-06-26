@@ -117,7 +117,6 @@ async def dialog(message: types.Message, *args, **kwargs):
                 )
                 counter_mess(message.chat.id)
                 answer = markdown.escape_md(str(response['choices'][0]['message']['content']))
-                print(str(response['choices'][0]['message']['content']))
                 answer = split_messages(answer)
                 temp_history[index_history[0]][message.chat.id].append(
                     {"role": "assistant", "content": response['choices'][0]['message']['content']})
